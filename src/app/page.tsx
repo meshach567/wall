@@ -4,48 +4,54 @@ import ProfileCard from "@/components/ProfileCard";
 import WallInput from "@/components/WaLLInput";
 import WallList from "@/components/WallList";
 import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
-const DEMO_POSTS = [
-  { author: "Anna", text: "Hey Greg, did you debug your coffee maker yet? Last cup tasted like JavaScript errors." },
-  { author: "Adelaida", text: "Greg, saw your last coding session—pretty sure you broke Stack Overflow again! 🧱" },
-  { author: "Juho", text: "Greg, are you still coding in pajamas, or have you upgraded to full-time sweatpants mode?" },
-  { author: "Maija", text: "Greg, rumor has it your computer has more stickers than code running on it. Confirm?" },
-  { author: "Alex", text: "Yo Greg, just pulled an all-nighter on the assignment. Turns out sleep deprivation doesn't improve coding skills. Weird!" },
-  { author: "Sheryl", text: "Greg, when are we gonna deploy your latest dance moves to production? #AgileDancer" },
-];
-
-const STORAGE_KEY = "wall_posts";
+interface Post {
+  id: string;
+  author: string;
+  text: string;
+  created_at: string;
+}
 
 export default function Home() {
-  const [posts, setPosts] = useState(DEMO_POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Load posts from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setPosts(JSON.parse(stored));
-      } catch {
-        setPosts(DEMO_POSTS);
-      }
+  // Fetch posts from Supabase
+  const fetchPosts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, author, text, created_at")
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      setPosts(data);
     }
-  }, []);
+    setLoading(false);
+  };
 
-  // Save posts to localStorage whenever posts change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  }, [posts]);
+    fetchPosts();
+  }, []);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (name.trim() && message.trim() && message.length <= 280) {
-      setPosts([{ author: name.trim(), text: message.trim() }, ...posts]);
+      setLoading(true);
+      const { error } = await supabase.from("posts").insert({
+        author: name.trim(),
+        text: message.trim(),
+      });
       setMessage("");
       setName("");
+      setLoading(false);
+      if (!error) {
+        fetchPosts();
+      }
     }
   };
 
@@ -67,7 +73,11 @@ export default function Home() {
               onMessageChange={handleMessageChange}
               onSubmit={handleSubmit}
             />
-            <WallList posts={posts} />
+            {loading ? (
+              <div className="text-center text-gray-400">Loading...</div>
+            ) : (
+              <WallList posts={posts} />
+            )}
           </div>
         </div>
       </div>
