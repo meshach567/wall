@@ -4,7 +4,7 @@ import ProfileCard from "@/components/ProfileCard";
 import WallInput from "@/components/WaLLInput";
 import WallList from "@/components/WallList";
 import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/supabaseClient";
 
 interface Post {
   id: string;
