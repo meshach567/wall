@@ -1,8 +1,11 @@
 import WallPost from "./WallPost";
 
 interface Post {
-  author: string;
-  text: string;
+  id: string;
+  user_id: string | null;
+  author: string | null;
+  body: string | null;
+  created_at: string;
 }
 
 interface WallListProps {
@@ -12,8 +15,8 @@ interface WallListProps {
 export default function WallList({ posts }: WallListProps) {
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      {posts.map((post, idx) => (
-        <WallPost key={idx} author={post.author} text={post.text} />
+      {posts.map((post) => (
+        <WallPost key={post.id} author={post.author || ""} text={post.body || ""} />
       ))}
     </div>
   );
