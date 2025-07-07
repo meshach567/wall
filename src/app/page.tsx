@@ -5,7 +5,6 @@ import WallInput from "@/components/WaLLInput";
 import WallList from "@/components/WallList";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/SupabaseAuthClient";
-import { get, post, isSuccessResponse } from "@/lib/Fetch";
 
 interface Post {
   id: string;
