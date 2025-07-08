@@ -29,3 +29,16 @@
 
     -- Add author column
     ALTER TABLE posts ADD COLUMN author text null;
+
+    -- Create storage bucket for photos --
+    INSERT INTO storage.buckets (id, name, public) VALUES ('wallphoto', 'wallphoto', true);
+
+    -- Create RLS policies for the storage bucket --
+    CREATE POLICY "Anyone can view wall photos" ON storage.objects FOR SELECT USING  (bucket_id = 'wallphoto');
+
+    CREATE POLICY "Anyone can upload wall photos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'wallphoto');
+
+    CREATE POLICY "Anyone can delete their own wall photos" ON storage.objects FOR DELETE USING (bucket_id = 'wallphoto');
+
+    -- Add photo_url column posts table --
+    ALTER TABLE public.posts ADD COLUMN photo_url text;
