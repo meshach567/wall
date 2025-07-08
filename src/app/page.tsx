@@ -11,6 +11,7 @@ interface Post {
   user_id: string | null;
   author: string | null;
   body: string | null;
+  photo_url?: string | null;
   created_at: string;
 }
 
@@ -21,12 +22,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Fetch posts from Supabase
+  // Fetch posts from Supabase (include photo_url)
   const fetchPosts = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("posts")
-      .select("id, user_id, author, body, created_at")
+      .select("id, user_id, author, body, photo_url, created_at")
       .order("created_at", { ascending: false });
     if (!error && data) {
       setPosts(data);
@@ -63,12 +64,36 @@ export default function Home() {
   const handleSubmit = async () => {
     if (name.trim() && message.trim() && message.length <= 280) {
       setLoading(true);
+      let photo_url = null;
+
+      // If a file is selected, upload to Supabase Storage
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('wallphoto')
+          .upload(fileName, selectedFile);
+
+        if (!uploadError && uploadData) {
+          // Get public URL
+          const { data: publicUrlData } = supabase
+            .storage
+            .from('wallphoto')
+            .getPublicUrl(fileName);
+          photo_url = publicUrlData.publicUrl;
+        }
+      }
+
       const { error } = await supabase.from("posts").insert({
         author: name.trim(),
         body: message.trim(),
+        photo_url,
       });
+
       setMessage("");
       setName("");
+      setSelectedFile(null);
       setLoading(false);
       if (!error) {
         fetchPosts();
